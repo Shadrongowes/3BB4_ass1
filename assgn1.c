@@ -1,8 +1,8 @@
 
 /*
  SE 3BB4, assignment 1
- student name: XXXXXX
- student number: XXXXXX
+ student name: Jason Paolasini
+ student number: 1162915
  file assgn1.c
  */
 
@@ -149,7 +149,7 @@ void lodeQueue()
         
     }
     else
-        printf("\n The logh-Queue is Empty");
+        printf("\n The low-Queue is Empty");
 }
 
 void lopush(struct jobAttr loPIDVal)
@@ -172,6 +172,22 @@ void lopush(struct jobAttr loPIDVal)
     }
     
 }
+int loisEmpty(){
+    struct loNode *lovar=loback;
+    if(lovar!=NULL)
+    {
+        while(lovar!=NULL)
+        {
+            lovar = lovar->lonext;
+        }
+        return 1;
+        
+    }
+    else{
+        return 0;
+    }
+    
+}
 
 int loprintQueue(){
     struct loNode *lovar=loback;
@@ -181,33 +197,18 @@ int loprintQueue(){
         while(lovar!=NULL)
         {
             printf("\n%d,%d,%d,%d",lovar->loData.jobNumber,lovar->loData.priority,lovar->loData.PIDi,lovar->loData.number_of_runs);
+            lovar = lovar->lonext;
         }
         printf("\n");
         return 1;
         
     }
     else{
-        printf("\n The logh-Queue was empty");
-    return 0;
+        printf("\n The low-Queue was empty");
+        return 0;
     }
 }
 
-int loisEmpty(){
-    struct loNode *lovar=loback;
-    if(lovar!=NULL)
-    {
-                while(lovar!=NULL)
-        {
-            lovar = lovar->lonext;
-                   }
-        return 1;
-        
-    }
-    else{
-        return 0;
-    }
-    
-}
 
 
 struct medNode
@@ -315,7 +316,7 @@ int main(int argc,char** argv) {
     }
         int number_of_jobs = argv[1][0]-'0';
         
-        printf("\nYou are about to process %d Jobs\n",number_of_jobs);
+        printf("\nYou are about to process %d Jobs\n--------------------------------\n",number_of_jobs);
         
     
     
@@ -411,7 +412,18 @@ int main(int argc,char** argv) {
 //            
 //            
 //        }
+//        
+//        loprintQueue();
+//        medprintQueue();
+//        hiprintQueue();
         
+        if((loisEmpty()+medisEmpty()+hiisEmpty())==0){
+            allEmpty = 0;
+            Msg("\nAll jobs done\n");
+            msg("\nAll jobs done\n");
+            break;
+            
+        }
         
         if (hiisEmpty()==1){
         
@@ -425,6 +437,7 @@ int main(int argc,char** argv) {
             
             alarm(1);
             sigsuspend(&mymask1);
+            //hideQueue();
             //sigprocmask(SIG_SETMASK,&mymask2,&mymask1);
             
            
@@ -438,29 +451,34 @@ int main(int argc,char** argv) {
             msg("Switched on medium-priority job %d\n",medback->medData.jobNumber);
             alarm(1);
             sigsuspend(&mymask1);
+            //meddeQueue();
             //sigprocmask(SIG_SETMASK,&mymask2,&mymask1);
             
             
             
         }
         else {
+            
+            if((loisEmpty()==0)){
+                allEmpty = 0;
+                Msg("\nAll jobs done\n");
+                msg("\nAll jobs done\n");
+                break;
+            }
           
             kill(loback->loData.PIDi,SIGUSR1);
             
-            Msg("Switched on lo-priority job %d\n",loback->loData.jobNumber);
-            msg("Switched on lo-priority job %d\n",loback->loData.jobNumber);
+            Msg("Switched on low-priority job %d\n",loback->loData.jobNumber);
+            msg("Switched on low-priority job %d\n",loback->loData.jobNumber);
             alarm(1);
             sigsuspend(&mymask1);
+           // lodeQueue();
         
         
-        if((lofront->loData.PIDi==loback->loData.PIDi)||loisEmpty()==0){
-            allEmpty = 0;
-            Msg("\nAll jobs done\n");
-            msg("\nAll jobs done\n");
+       
         }
-        }
-   
     }
+    
     return 0;
 }// end function main
 
@@ -521,7 +539,7 @@ void siga_handler() {
         msg("Switched off medium-priority job %d\n",medback->medData.jobNumber);
 
         
-        if(medback->medData.number_of_runs>=4){
+        if(medback->medData.number_of_runs>=6){
             lopush(medback->medData);
             kill(medback->medData.PIDi,SIGUSR2);
             meddeQueue();
@@ -540,11 +558,21 @@ void siga_handler() {
     else {
         (loback->loData.number_of_runs)++;
      
-        Msg("Switched off low-priority job %d\n",lofront->loData.jobNumber);
-        msg("Switched off low-priority job %d\n",lofront->loData.jobNumber);
+        
+        if (loback->loData.number_of_runs>50) {
+            msg("Job Time-out, Job %d has executed 50 times",loback->loData.jobNumber);
+            Msg("Job Time-out, Job %d has executed 50 times",loback->loData.jobNumber);
+            exit(1);
+            lodeQueue();
+        }
+        
+        Msg("Switched off low-priority job %d\n",loback->loData.jobNumber);
+        msg("Switched off low-priority job %d\n",loback->loData.jobNumber);
         lopush(loback->loData);
         kill(loback->loData.PIDi,SIGUSR2);
         lodeQueue();
+        
+       
     }
     
    
@@ -572,8 +600,8 @@ void sigc_handler() {
     if (hiisEmpty()==1){
         
         Msg("job %d done\n",hiback->hiData.jobNumber);
-        
-            hideQueue();
+        kill(hiback->hiData.PIDi,SIGUSR2);
+        hideQueue();
         
         
     }
@@ -581,8 +609,7 @@ void sigc_handler() {
     else if(medisEmpty()==1){
         
         Msg("job %d done\n",medback->medData.jobNumber);
-       
-    
+        kill(medback->medData.PIDi,SIGUSR2);
         meddeQueue();
         
         
@@ -590,8 +617,7 @@ void sigc_handler() {
     else {
         
         Msg("job %d done\n",loback->loData.jobNumber);
-        
-        
+        kill(loback->loData.PIDi,SIGUSR2);
         lodeQueue();
         
         

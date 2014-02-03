@@ -1,8 +1,7 @@
-
 /*
  SE 3BB4, assignment 1
- student name: XXXXXX
- student number: XXXXXX
+ student name: Jason Paolasini
+ student number: 1162915
  file log.c
  */
 

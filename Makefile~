@@ -5,7 +5,7 @@
 CFLAGS=  -c -Wall
 CC=gcc
 
-assgn1:assgn1 job
+all:assgn1 job
 
 assgn1:assgn1.o log.o
 	$(CC)  assgn1.o  log.o -o assgn1
