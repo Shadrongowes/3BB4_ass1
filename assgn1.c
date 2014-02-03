@@ -328,9 +328,9 @@ int main(int argc,char** argv) {
     // prepare mymask1 -- SIGCHLD and SIGALRM blocked, all other signals free
     
     sigemptyset(&mymask1);
-    sigfillset(&mymask1);
-    sigdelset(&mymask1,SIGCHLD);
-    sigdelset(&mymask1,SIGALRM);
+    //sigfillset(&mymask1);
+    sigaddset(&mymask1,SIGCHLD);
+    sigaddset(&mymask1,SIGALRM);
     
     
    
@@ -340,13 +340,13 @@ int main(int argc,char** argv) {
     // prepare mymask2 -- all signals free
     
     sigemptyset(&mymask2);
-    sigfillset(&mymask2);
+   
   
 
     // prepare jobmask -- all signals blocked except SIGUSR2
     
-    sigemptyset(&jobmask);
-    sigaddset(&jobmask,SIGUSR2);
+    sigfillset(&jobmask);
+    sigdelset(&jobmask,SIGUSR2);
     
     
     // TO DO
@@ -417,26 +417,20 @@ int main(int argc,char** argv) {
 //        medprintQueue();
 //        hiprintQueue();
         
-        if((loisEmpty()+medisEmpty()+hiisEmpty())==0){
-            allEmpty = 0;
-            Msg("\nAll jobs done\n");
-            msg("\nAll jobs done\n");
-            break;
-            
-        }
+     
         
         if (hiisEmpty()==1){
         
-            
+            Msg("Switched on high-priority job %d\n",hiback->hiData.jobNumber);
+            msg("Switched on high-priority job %d\n",hiback->hiData.jobNumber);
             
             kill(hiback->hiData.PIDi,SIGUSR1);
             
 
-            Msg("Switched on high-priority job %d\n",hiback->hiData.jobNumber);
-            msg("Switched on high-priority job %d\n",hiback->hiData.jobNumber);
+            
             
             alarm(1);
-            sigsuspend(&mymask1);
+            sigsuspend(&mymask2);
             //hideQueue();
             //sigprocmask(SIG_SETMASK,&mymask2,&mymask1);
             
@@ -450,7 +444,7 @@ int main(int argc,char** argv) {
             Msg("Switched on medium-priority job %d\n",medback->medData.jobNumber);
             msg("Switched on medium-priority job %d\n",medback->medData.jobNumber);
             alarm(1);
-            sigsuspend(&mymask1);
+            sigsuspend(&mymask2);
             //meddeQueue();
             //sigprocmask(SIG_SETMASK,&mymask2,&mymask1);
             
@@ -471,12 +465,20 @@ int main(int argc,char** argv) {
             Msg("Switched on low-priority job %d\n",loback->loData.jobNumber);
             msg("Switched on low-priority job %d\n",loback->loData.jobNumber);
             alarm(1);
-            sigsuspend(&mymask1);
+            sigsuspend(&mymask2);
            // lodeQueue();
         
         
        
         }
+    
+    if((loisEmpty()+medisEmpty()+hiisEmpty())==0){
+        allEmpty = 0;
+        Msg("\nAll jobs done\n");
+        msg("\nAll jobs done\n");
+        break;
+        
+    }
     }
     
     return 0;
