@@ -48,7 +48,7 @@ struct jobAttr{
 
 int number_of_jobs;
 
-//Queue to handle jobs
+//Queue to handle jobs Each queue has their own Struct of nodes
 
 struct hiNode
 {
@@ -72,6 +72,8 @@ void hideQueue()
         printf("\n The High-Queue is Empty");
 }
 
+//Push Node onto Queue
+
 void hipush(struct jobAttr hiPIDVal)
 {
     struct hiNode *hitemp;
@@ -93,6 +95,8 @@ void hipush(struct jobAttr hiPIDVal)
     
 }
 
+//Print all values of Queue
+
 int hiprintQueue(){
     struct hiNode *hivar=hiback;
     if(hivar!=NULL)
@@ -113,6 +117,8 @@ int hiprintQueue(){
     }
 }
 
+//Check if queue is Empty
+
 int hiisEmpty(){
     struct hiNode *hivar=hiback;
     if(hivar!=NULL)
@@ -129,6 +135,9 @@ int hiisEmpty(){
     }
     
 }
+
+
+//Repeats for Lo and Med Queues
 
 struct loNode
 {
@@ -292,6 +301,9 @@ int medprintQueue(){
 
 
 
+
+
+
 // function main -------------------------------------------------
 int main(int argc,char** argv) {
     int i, j;
@@ -328,19 +340,16 @@ int main(int argc,char** argv) {
     // prepare mymask1 -- SIGCHLD and SIGALRM blocked, all other signals free
     
     sigemptyset(&mymask1);
-    //sigfillset(&mymask1);
+   
     sigaddset(&mymask1,SIGCHLD);
     sigaddset(&mymask1,SIGALRM);
-    
-    
-   
     sigprocmask(SIG_SETMASK, &mymask1, NULL);
     
     
     // prepare mymask2 -- all signals free
     
     sigemptyset(&mymask2);
-   
+
   
 
     // prepare jobmask -- all signals blocked except SIGUSR2
@@ -349,39 +358,27 @@ int main(int argc,char** argv) {
     sigdelset(&jobmask,SIGUSR2);
     
     
-    // TO DO
-    
+    //Initializes Child and Alarm Handler Masks and Flags
     
     sa_alarm.sa_handler = siga_handler;
     sigemptyset(&sa_alarm.sa_mask);
     sa_alarm.sa_flags = SA_RESTART;
-   
-    
     sigaction(SIGALRM,&sa_alarm,NULL);
     
     
-    
+    //Initializes Child and Alarm Handler Masks and Flags
     sa_chld.sa_handler = sigc_handler;
     sigemptyset(&sa_chld.sa_mask);
     sa_chld.sa_flags = SA_RESTART;
-    
-    
     sigaction(SIGCHLD,&sa_chld,NULL);
 
     
-    // TO DO
-    // create empty high-priority queue
-    // create empty medium-priority queue
-    // create empty low-priority queue
-    // END TO DO
     
-    
-    
-    // TO DO
     // create a data structure to keep information about jobs - PID, number of runs
-
-    
     struct jobAttr jawbs[number_of_jobs];
+    
+    //Initialize Jons to do based on input from user and add to Hi Queue
+    //Initializes Queue!
     
      for(i = 0; i < number_of_jobs; i++) {
          pid = create_job(i);
@@ -401,84 +398,85 @@ int main(int argc,char** argv) {
     while (allEmpty!=0)
         
     {
-    // TO DO
-    // in a loop
-    //    if all queues are empty
+   //Check if all Jobs are done
+        if((loisEmpty()+medisEmpty()+hiisEmpty())==0){
+            allEmpty = 0;
+            Msg("\nAll jobs done\n");
+            msg("\nAll jobs done\n");
+            exit(1);
+            break;
+            
+        }
         
-       
-//        if (1==allEmpty){
-//            Msg("All jobs are Done\n");
-//            msg("All jobs are Done\n");
-//            
-//            
-//        }
-//        
-//        loprintQueue();
-//        medprintQueue();
-//        hiprintQueue();
         
-     
+        
+        //Check if Jobs are to be done in Hi Queue
         
         if (hiisEmpty()==1){
         
             Msg("Switched on high-priority job %d\n",hiback->hiData.jobNumber);
             msg("Switched on high-priority job %d\n",hiback->hiData.jobNumber);
             
+            //Call to SIGURS1
             kill(hiback->hiData.PIDi,SIGUSR1);
-            
-
-            
-            
             alarm(1);
-            sigsuspend(&mymask2);
-            //hideQueue();
-            //sigprocmask(SIG_SETMASK,&mymask2,&mymask1);
+            
+            if(sigsuspend(&mymask2)!=-1){
+                perror("Bad!");
+            }
+            
             
            
             
         }
+        
+        
+        //Check if Jobs are to be done in Med Queue
+        
         else if(medisEmpty()==1){
-            
-            kill(medback->medData.PIDi,SIGUSR1);
             
             Msg("Switched on medium-priority job %d\n",medback->medData.jobNumber);
             msg("Switched on medium-priority job %d\n",medback->medData.jobNumber);
+            kill(medback->medData.PIDi,SIGUSR1);
             alarm(1);
-            sigsuspend(&mymask2);
+            
+            if(sigsuspend(&mymask2)!=-1){
+                perror("Bad!");
+            }
             //meddeQueue();
             //sigprocmask(SIG_SETMASK,&mymask2,&mymask1);
             
             
             
         }
+        
+        
+        //Check if Jobs are to be done in Low Queue
+        
         else {
-            
-            if((loisEmpty()==0)){
-                allEmpty = 0;
-                Msg("\nAll jobs done\n");
-                msg("\nAll jobs done\n");
-                break;
-            }
+//            
+//            if((loisEmpty()==0)){
+//                
+//                Msg("\nAll jobs done\n");
+//                msg("\nAll jobs done\n");
+//                allEmpty = 0;
+//                exit(1);
+//                break;
+//            }
           
-            kill(loback->loData.PIDi,SIGUSR1);
-            
             Msg("Switched on low-priority job %d\n",loback->loData.jobNumber);
             msg("Switched on low-priority job %d\n",loback->loData.jobNumber);
+            kill(loback->loData.PIDi,SIGUSR1);
+            
+
             alarm(1);
-            sigsuspend(&mymask2);
-           // lodeQueue();
-        
+            if(sigsuspend(&mymask2)!=-1){
+                perror("Bad!");
+            }
         
        
-        }
-    
-    if((loisEmpty()+medisEmpty()+hiisEmpty())==0){
-        allEmpty = 0;
-        Msg("\nAll jobs done\n");
-        msg("\nAll jobs done\n");
-        break;
         
-    }
+        }
     }
     
     return 0;
@@ -512,9 +510,11 @@ pid_t create_job(int i) {
 // function siga_handler ------------------------------------------
 void siga_handler() {
  
-   
+   //Hi Priority Job has completed, push to Med queue or back onto high, Based on number of runs
     
     if (hiisEmpty()==1){
+        
+        //Increment Runs
         (hiback->hiData.number_of_runs)++;
         
         Msg("Switched off high-priority job %d\n",hiback->hiData.jobNumber);
@@ -522,40 +522,51 @@ void siga_handler() {
         
         if(hiback->hiData.number_of_runs>=2){
             medpush(hiback->hiData);
-            kill(hiback->hiData.PIDi,SIGUSR2);
             hideQueue();
+            kill(hifront->hiData.PIDi,SIGUSR2);
+            
         }
         else{
             hipush(hiback->hiData);
-            kill(hiback->hiData.PIDi,SIGUSR2);
             hideQueue();
+            kill(hifront->hiData.PIDi,SIGUSR2);
+            
         }
         
         
         
     }
     
+    
+      //Med Priority Job has completed, push to Low queue or back onto Med, Based on number of runs
+    
     else if(medisEmpty()==1){
-      (medback->medData.number_of_runs)++;
+        
+        //Increment runs
+        (medback->medData.number_of_runs)++;
         Msg("Switched off medium-priority job %d\n",medback->medData.jobNumber);
         msg("Switched off medium-priority job %d\n",medback->medData.jobNumber);
 
         
         if(medback->medData.number_of_runs>=6){
             lopush(medback->medData);
-            kill(medback->medData.PIDi,SIGUSR2);
             meddeQueue();
+            kill(medfront->medData.PIDi,SIGUSR2);
+            
             
         }
         else{
             medpush(medback->medData);
-            kill(medback->medData.PIDi,SIGUSR2);
-            meddeQueue();
+             meddeQueue();
+            kill(medfront->medData.PIDi,SIGUSR2);
+           
         }
        
         
     }
     
+    
+    //Same as Med and Hi Queue.
     
     else {
         (loback->loData.number_of_runs)++;
@@ -571,27 +582,14 @@ void siga_handler() {
         Msg("Switched off low-priority job %d\n",loback->loData.jobNumber);
         msg("Switched off low-priority job %d\n",loback->loData.jobNumber);
         lopush(loback->loData);
-        kill(loback->loData.PIDi,SIGUSR2);
         lodeQueue();
+        kill(lofront->loData.PIDi,SIGUSR2);
+        
         
        
     }
     
    
-    
-    // TO DO
-    // "switch of" the currently executing job by sending it SIGUSR2 signal
-    // (using sigsend())
-    
-    // either put the job back to the queue it came from (you must count
-    // how many times it has been through the queue) or "demote it" to the
-    // lower-prority queue.
-    // record this in the log using
-    //     Msg("Switched off high-priority job %d\n",job number); or
-    //     Msg("Switched off medium-priority job %d\n",job number);
-    //     Msg("Switched off low-priority job %d\n",job number);
-    // announce it on the screen suing corresponding msg();
-    // END TO DO
     return;
 }// end function siga_handler
 
@@ -602,7 +600,7 @@ void sigc_handler() {
     if (hiisEmpty()==1){
         
         Msg("job %d done\n",hiback->hiData.jobNumber);
-        kill(hiback->hiData.PIDi,SIGUSR2);
+        //kill(hiback->hiData.PIDi,SIGUSR2);
         hideQueue();
         
         
@@ -611,7 +609,7 @@ void sigc_handler() {
     else if(medisEmpty()==1){
         
         Msg("job %d done\n",medback->medData.jobNumber);
-        kill(medback->medData.PIDi,SIGUSR2);
+        //kill(medback->medData.PIDi,SIGUSR2);
         meddeQueue();
         
         
@@ -619,21 +617,12 @@ void sigc_handler() {
     else {
         
         Msg("job %d done\n",loback->loData.jobNumber);
-        kill(loback->loData.PIDi,SIGUSR2);
+        //kill(loback->loData.PIDi,SIGUSR2);
         lodeQueue();
         
         
        
     }
 
- 
-    // TO DO
-    // disarm the alarm
-    // record in the log that the currently executing job is done by
+ }// end function sigc_handler
 
-    // END TO DO 
-}// end function sigc_handler
-
-// TO DO
-// functions for handling your data structures
-// END TO DO
